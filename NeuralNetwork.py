@@ -7,7 +7,7 @@ def initialize_parameters(layer_dims):
     output: a dictionary containing the initialized W and b parameters of each layer (W1…WL, b1…bL).
     """""
     init_params = {}
-    for i, layer in enumerate(layer_dims[1:1]):
+    for i, layer in enumerate(layer_dims[1:]):
         init_params['W'+str(i)] = np.random.rand(layer_dims[i],layer_dims[i-1]) # should we use specific range for this initializttion?
         init_params['b'+str(i)] = np.zeros(shape=(layer_dims[i],1))
 
