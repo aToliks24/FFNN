@@ -1,11 +1,54 @@
 # coding=utf-8
 import numpy as np
+import idx2numpy
 
 np.random.seed(555)
 
+def load_data_set(numbers_classes):
+    """
+    
+    :param numbers_classes: list of size 2, with the numbers we want to select from the dataset 
+            usage example load_data_set([3,8]) where the label for 3 is 0 and the label for 8 is 1
+    :return: (x_train, y_train), (x_test, y_test)
+    """
+
+    # train
+
+    x_train = idx2numpy.convert_from_file('data/train-images.idx3-ubyte')  # shape ((m_train, 28, 28)
+    x_train = x_train.reshape(x_train.shape[0], -1)  # shape (m_train, 784)
+
+    y_train = idx2numpy.convert_from_file('data/train-labels.idx1-ubyte')
+
+    mask = np.vectorize(lambda t: True if t in numbers_classes else False)
+    train_mask = mask(y_train)
+
+    x_train = x_train[train_mask]
+    y_train = y_train[train_mask]
+
+    class_to_binary = np.vectorize(lambda t: 0 if t == numbers_classes[0] else 1)
+    y_train = class_to_binary(y_train)
+
+    # test
+
+    x_test = idx2numpy.convert_from_file('data/t10k-images.idx3-ubyte')  # shape ((m_test, 28, 28)
+    x_test = x_test.reshape(x_test.shape[0], -1) # shape (m_test, 784)
+
+    y_test = idx2numpy.convert_from_file('data/t10k-labels.idx1-ubyte')
+
+    test_mask = mask(y_test)
+
+    x_test = x_test[test_mask]
+    y_test = y_test[test_mask]
+
+    y_test = class_to_binary(y_test)
+
+    return (x_train, y_train), (x_test, y_test)
+
+
+
 
 def initialize_parameters(layer_dims):
-    """"
+    """
     input: an array of the dimensions of each layer in the network (layer 0 is the size of the flattened input, layer L is the output sigmoid)
     output: a dictionary containing the initialized W and b parameters of each layer (W1…WL, b1…bL).
     """
