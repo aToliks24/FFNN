@@ -207,9 +207,9 @@ def linear_backward(dZ,cache):
     dW - Gradient of the cost with respect to W (current layer l), same shape as W
     db - Gradient of the cost with respect to b (current layer l), same shape as b
     """
-    dA_prev=dZ+cache['A']
-    dW=np.dot( dZ,cache['A'].transpose())/cache['A'].shape[0]
-    db=dZ/cache['A'].shape[0]
+    dA_prev=cache["W"].T*dZ
+    dW=np.dot( dZ,cache['A_prev'].transpose())#/cache['A_prev'].shape[0]
+    db=dZ#/cache['A_prev'].shape[0]
     return dA_prev,dW,db
 
 
@@ -224,10 +224,9 @@ def relu_backward (dA, activation_cache):
     Output:
     dZ – gradient of the cost with respect to Z
     """
-    if activation_cache["Z"]<0:
-        gz=0
-    else:
-        gz=1
+    gz=activation_cache["Z"].copy()
+    gz[gz<=0] =0
+    gz[gz >0] =1
     dZ=np.dot(dA,gz)
     return  dZ
 
@@ -245,7 +244,7 @@ def sigmoid_backward (dA, activation_cache):
     a,_=sigmoid(activation_cache["Z"])
     gz=a*(1-a)
     dZ = np.dot(dA, gz)
-    return  dZ
+    return dZ
 
 
 def L_model_backward(AL, Y, caches):
@@ -267,10 +266,10 @@ def L_model_backward(AL, Y, caches):
     """
     dAL= -(np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
     n_layers=len(caches)
-    dA_prev, dW, db=linear_activation_backward(dAL,caches[-1],'sigmoid')
+    dA_prev, dW, db=linear_activation_backward(dAL,{"A_prev":AL,"W":caches[-1]["W"]},'sigmoid')
     grads={"dA"+str(n_layers):dA_prev,"dW"+str(n_layers):dW,"db"+str(n_layers):db}
     for i in range (n_layers-1,0,-1):
-        dA_prev, dW, db = linear_activation_backward(dA_prev, caches[i], 'relu')
+        dA_prev, dW, db = linear_activation_backward(dA_prev, {"A_prev":caches[i-1]["A"],"W":caches[i]["W"]}, 'relu')
         grads.update({"dA"+str(i):dA_prev,"dW"+str(i):dW,"db"+str(i):db})
     return grads
 
@@ -363,6 +362,13 @@ def test_forward():
 
     (x_train, y_train), (x_test, y_test)  = load_data_set([1,2])
     print ((x_train.shape, y_train.shape), (x_test.shape, y_test.shape))
+
+def test_backward():
+    (x_train, y_train), (x_test, y_test) = load_data_set([1, 2])
+    print("X_train shape: {}".format(x_train.shape))
+    params = initialize_parameters([x_train.shape[0], 3, 4, 5, 6, 2, 1])
+    AL, caches=L_model_forward(x_train,params)
+    print("AL shape: {}".format(AL.shape))
 
 if __name__ == '__main__':
     # test_forward()
