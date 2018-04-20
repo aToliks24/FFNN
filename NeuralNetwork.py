@@ -78,7 +78,7 @@ def linear_forward(A, W, b):
     linear_cache – a dictionary containing A, W, b and Z (stored for making the backpropagation easier to compute)
     """
     Z = np.dot(W,A) + b # broadcasting
-    linear_cache = {"A": A, "W": W, "b": b, "Z": Z}  # TODO: Remove Z from cach dictionary
+    linear_cache = {"A": A, "W": W, "b": b}  # TODO: Remove Z from cach dictionary
 
     return Z, linear_cache
 
@@ -127,9 +127,11 @@ def linear_activation_forward(A_prev, W, B, activation):
 
     Z, linear_cache = linear_forward(A_prev, W, B)
     if activation == "sigmoid":
-        return sigmoid(Z), linear_cache
+        A, activation_cache = sigmoid(Z)
+        return A, {**linear_cache, **activation_cache}
     elif activation == "relu":
-        return relu(Z), linear_cache
+        A, activation_cache = relu(Z)
+        return A, {**linear_cache, **activation_cache}
 
 
 def L_model_forward(X, parameters):
@@ -146,10 +148,10 @@ def L_model_forward(X, parameters):
     L = len(parameters) / 2 # parameters is a dictionary which holds Wl and bl for each layer l
     A = X
     for i in range(1,L):
-        A, linear_cache = linear_activation_forward(A,parameters['W'+str(i)], parameters['b'+str(i)], "relu")
-        caches.append(linear_cache)
-    AL, linear_cache = linear_activation_forward(A, parameters['W' + str(L)], parameters['b' + str(L)], "sigmoid")
-    caches.append(linear_cache)
+        A, cache = linear_activation_forward(A,parameters['W'+str(i)], parameters['b'+str(i)], "relu")
+        caches.append(cache)
+    AL, cache = linear_activation_forward(A, parameters['W' + str(L)], parameters['b' + str(L)], "sigmoid")
+    caches.append(cache)
 
     return AL, caches
 
