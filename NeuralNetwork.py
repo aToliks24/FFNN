@@ -257,8 +257,8 @@ def L_model_backward(AL, Y, caches):
     grads["dA" + str(l)] = ... grads["dW" + str(l)] = ... grads["db" + str(l)] = ...
 
     """
-    dAL= -(np.divide(Y, AL) + np.divide(1 - Y, 1 - AL))
-    n_layers=len(caches.keys())
+    dAL= -(np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
+    n_layers=len(caches)
     dA_prev, dW, db=linear_activation_backward(dAL,caches[-1],'sigmoid')
     grads={"dA"+str(n_layers):dA_prev,"dW"+str(n_layers):dW,"db"+str(n_layers):db}
     for i in range (n_layers-1,0,-1):
@@ -278,10 +278,10 @@ def Update_parameters(parameters, grads, learning_rate):
     Output:
     parameters – the updated values of the parameters object provided as input
     """
-    for l_num in parameters.keys():
+    for l_num in range(len(parameters)):
         parameters[l_num]["W"]+=(grads[l_num]["dW"]*learning_rate)
         parameters[l_num]["b"] += (grads[l_num]["db"] * learning_rate)
-
+    return parameters
 
 def L_layer_model(X, Y, layers_dims, learning_rate, num_iterations):
     """
@@ -295,3 +295,12 @@ def L_layer_model(X, Y, layers_dims, learning_rate, num_iterations):
     parameters – the parameters learnt by the system during the training (the same parameters that were updated in the update_parameters function).
     costs – the values of the cost function (calculated by the compute_cost function). One value is to be saved after each 100 training iterations (e.g. 3000 iterations -> 30 values).
     """
+    parameters=initialize_parameters(layers_dims)
+    costs=[]
+    for i in range(num_iterations):
+        AL, caches=L_model_forward(X,parameters)
+        costs.append(compute_cost(AL,caches))
+        grads=L_model_backward(AL,Y,caches)
+        parameters=Update_parameters(parameters,grads,learning_rate)
+    return parameters,costs
+
