@@ -205,9 +205,9 @@ def linear_backward(dZ,cache):
     dW - Gradient of the cost with respect to W (current layer l), same shape as W
     db - Gradient of the cost with respect to b (current layer l), same shape as b
     """
-    dA_prev=dZ+cache['A_prev']
-    dW=dZ*cache['A_prev'].transpose()
-    db=dZ
+    dA_prev=dZ+cache['A']
+    dW=np.dot( dZ,cache['A'].transpose())/cache['A'].shape[0]
+    db=dZ/cache['A'].shape[0]
     return dA_prev,dW,db
 
 
@@ -264,15 +264,13 @@ def L_model_backward(AL, Y, caches):
 
     """
     dAL= -(np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
-    n_layers=len(caches.keys())
+    n_layers=len(caches)
     dA_prev, dW, db=linear_activation_backward(dAL,caches[-1],'sigmoid')
     grads={"dA"+str(n_layers):dA_prev,"dW"+str(n_layers):dW,"db"+str(n_layers):db}
     for i in range (n_layers-1,0,-1):
-        dA_prev, dW, db = linear_activation_backward(dA_prev, i, 'relu')
+        dA_prev, dW, db = linear_activation_backward(dA_prev, caches[i], 'relu')
         grads.update({"dA"+str(i):dA_prev,"dW"+str(i):dW,"db"+str(i):db})
     return grads
-
-
 
 
 def Update_parameters(parameters, grads, learning_rate):
@@ -286,6 +284,7 @@ def Update_parameters(parameters, grads, learning_rate):
     Output:
     parameters – the updated values of the parameters object provided as input
     """
+<<<<<<< HEAD
 
 if __name__ == '__main__':
     init = initialize_parameters([10,3,4,5,6,2,1])
@@ -318,4 +317,31 @@ if __name__ == '__main__':
     (x_train, y_train), (x_test, y_test)  = load_data_set([1,2])
     print ((x_train.shape, y_train.shape), (x_test.shape, y_test.shape))
 
+=======
+    for l_num in range(len(parameters)):
+        parameters[l_num]["W"]+=(grads[l_num]["dW"]*learning_rate)
+        parameters[l_num]["b"] += (grads[l_num]["db"] * learning_rate)
+    return parameters
+
+def L_layer_model(X, Y, layers_dims, learning_rate, num_iterations):
+    """
+    Description:
+    Implements a L-layer neural network. All layers but the last should have the ReLU activation function, and the final layer will apply the sigmoid activation function. The network should only address binary classification.
+    Hint: the function should use the earlier functions in the following order: initialize -> L_model_forward -> compute_cost -> L_model_backward -> update parameters
+    Input:
+    X – the input data, a numpy array of shape (height*width , number_of_examples) Comment: since the input is in grayscale we only have height and width, otherwise it would have been height*width*3
+    Y – the “real” labels of the data, a vector of shape (1, number of examples) Layer_dims – a list containing the dimensions of each layer, including the input
+    Output:
+    parameters – the parameters learnt by the system during the training (the same parameters that were updated in the update_parameters function).
+    costs – the values of the cost function (calculated by the compute_cost function). One value is to be saved after each 100 training iterations (e.g. 3000 iterations -> 30 values).
+    """
+    parameters=initialize_parameters(layers_dims)
+    costs=[]
+    for i in range(num_iterations):
+        AL, caches=L_model_forward(X,parameters)
+        costs.append(compute_cost(AL,caches))
+        grads=L_model_backward(AL,Y,caches)
+        parameters=Update_parameters(parameters,grads,learning_rate)
+    return parameters,costs
+>>>>>>> e2b9349b9d15c4fcc9d876bd20ded6fb40d20428
 
