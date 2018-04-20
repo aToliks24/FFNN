@@ -9,19 +9,22 @@ def load_data_set(numbers_classes):
     
     :param numbers_classes: list of size 2, with the numbers we want to select from the dataset 
             usage example load_data_set([3,8]) where the label for 3 is 0 and the label for 8 is 1
-    :return: (x_train, y_train), (x_test, y_test)
+    :return: (x_train, y_train), (x_test, y_test) --- X – the data, numpy array of shape (input size (features), number of examples)
     """
 
     # train
 
     x_train = idx2numpy.convert_from_file('data/train-images.idx3-ubyte')  # shape ((m_train, 28, 28)
-    x_train = x_train.reshape(x_train.shape[0], -1)  # shape (m_train, 784)
+    x_train = x_train.reshape(x_train.shape[0], -1)  # shape (m_train,784)
+    print("    x_train = x_train.reshape(x_train.shape[0], -1).T:   ", x_train.shape)
 
     y_train = idx2numpy.convert_from_file('data/train-labels.idx1-ubyte')
+    #y_train = np.expand_dims(y_train, axis=0)
+    print("np.expand_dims(y_train, axis=0):    ", y_train.shape)
 
     mask = np.vectorize(lambda t: True if t in numbers_classes else False)
     train_mask = mask(y_train)
-
+    print("train_mask = mask(y_train):     ", train_mask.shape)
     x_train = x_train[train_mask]
     y_train = y_train[train_mask]
 
@@ -31,9 +34,10 @@ def load_data_set(numbers_classes):
     # test
 
     x_test = idx2numpy.convert_from_file('data/t10k-images.idx3-ubyte')  # shape ((m_test, 28, 28)
-    x_test = x_test.reshape(x_test.shape[0], -1) # shape (m_test, 784)
+    x_test = x_test.reshape(x_test.shape[0], -1)  # shape (m_test, 784 )
 
     y_test = idx2numpy.convert_from_file('data/t10k-labels.idx1-ubyte')
+    #y_test = np.expand_dims(y_test, axis=0)
 
     test_mask = mask(y_test)
 
@@ -42,7 +46,8 @@ def load_data_set(numbers_classes):
 
     y_test = class_to_binary(y_test)
 
-    return (x_train, y_train), (x_test, y_test)
+    # shapes: ((784, m_train), (1, m_train)) ((784, m_test), (1, m_test))
+    return (x_train.T, np.expand_dims(y_train, axis=0)), (x_test.T, np.expand_dims(y_test, axis=0))
 
 
 
@@ -54,8 +59,9 @@ def initialize_parameters(layer_dims):
     """
     init_params = {}
     for i, layer in enumerate(layer_dims[1:]):
-        init_params['W'+str(i)] = np.random.rand(layer_dims[i],layer_dims[i-1]) # should we use specific range for this initialization?
-        init_params['b'+str(i)] = np.zeros(shape=(layer_dims[i],1))
+        print(i)
+        init_params['W'+str(i+1)] = np.random.rand(layer_dims[i+1],layer_dims[i]) # should we use specific range for this initialization?
+        init_params['b'+str(i+1)] = np.zeros(shape=(layer_dims[i+1],1))
 
     return init_params
 
@@ -72,9 +78,9 @@ def linear_forward(A, W, b):
     linear_cache – a dictionary containing A, W, b and Z (stored for making the backpropagation easier to compute)
     """
     Z = np.dot(W,A) + b # broadcasting
-    linear_cach = {"A": A, "W": W, "b": b, "Z": Z}
+    linear_cache = {"A": A, "W": W, "b": b, "Z": Z}  # TODO: Remove Z from cach dictionary
 
-    return Z, linear_cach
+    return Z, linear_cache
 
 
 def sigmoid(Z):
@@ -121,9 +127,9 @@ def linear_activation_forward(A_prev, W, B, activation):
 
     Z, linear_cache = linear_forward(A_prev, W, B)
     if activation == "sigmoid":
-        return sigmoid(Z)
+        return sigmoid(Z), linear_cache
     elif activation == "relu":
-        return relu(Z)
+        return relu(Z), linear_cache
 
 
 def L_model_forward(X, parameters):
@@ -157,8 +163,8 @@ def compute_cost(AL, Y):
     Output:
     cost – the cross-entropy cost
     """
-    #TODO verify len(Y): Y is (m,1) or(1,m)??
-    cost = -1.0/len(Y) * np.sum(np.multiply(Y, np.log(AL)) + np.multiply(1 - Y, np.log(1 - AL)))
+    #TODO verify len(Y): Y is (m,1) or(1,m)?? Answer: Y is (1,m)
+    cost = -1.0/Y.shape[1] * np.sum(np.multiply(Y, np.log(AL)) + np.multiply(1 - Y, np.log(1 - AL)))
     return cost
 
 
@@ -280,3 +286,36 @@ def Update_parameters(parameters, grads, learning_rate):
     Output:
     parameters – the updated values of the parameters object provided as input
     """
+
+if __name__ == '__main__':
+    init = initialize_parameters([10,3,4,5,6,2,1])
+    # A = np.expand_dims(np.array([1,1,1,1,1,1,1,1,1,1]), axis=1)
+    A = np.array([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1],[1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]).T
+    print ('W1 shape:', init['W1'].shape)
+    print (init['W1'])
+    print('A shape:', A.shape)
+    print (A)
+    print('W*A:', np.dot(init['W1'], A), np.dot(init['W1'], A).shape)
+    print('b1 shape:', init['b1'].shape)
+    print(init['b1'])
+
+    print (init['W1'])
+    A_new, cash = linear_forward(A, init['W1'], init['b1'])
+    print (A_new)
+
+    print ("-------------------")
+    print ('W2 shape:', init['W2'].shape)
+    print (init['W2'])
+    print('A_new shape:', A_new.shape)
+    print (A_new)
+    print('b2 shape:', init['b2'].shape)
+    print(init['b2'])
+    print(linear_forward(A_new, init['W2'], init['b2']))
+
+    print (sigmoid(np.array([[-100,-100,-100],[100,100,100],[1,1,1]])))
+    print (relu(np.array([[0.1,0.1,0.1],[-2,-2,-2],[1,1,1]])))
+
+    (x_train, y_train), (x_test, y_test)  = load_data_set([1,2])
+    print ((x_train.shape, y_train.shape), (x_test.shape, y_test.shape))
+
+
