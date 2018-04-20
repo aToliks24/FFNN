@@ -267,8 +267,6 @@ def L_model_backward(AL, Y, caches):
     return grads
 
 
-
-
 def Update_parameters(parameters, grads, learning_rate):
     """
     Description:
@@ -284,3 +282,16 @@ def Update_parameters(parameters, grads, learning_rate):
         parameters[l_num]["W"]+=(grads[l_num]["dW"]*learning_rate)
         parameters[l_num]["b"] += (grads[l_num]["db"] * learning_rate)
 
+
+def L_layer_model(X, Y, layers_dims, learning_rate, num_iterations):
+    """
+    Description:
+    Implements a L-layer neural network. All layers but the last should have the ReLU activation function, and the final layer will apply the sigmoid activation function. The network should only address binary classification.
+    Hint: the function should use the earlier functions in the following order: initialize -> L_model_forward -> compute_cost -> L_model_backward -> update parameters
+    Input:
+    X – the input data, a numpy array of shape (height*width , number_of_examples) Comment: since the input is in grayscale we only have height and width, otherwise it would have been height*width*3
+    Y – the “real” labels of the data, a vector of shape (1, number of examples) Layer_dims – a list containing the dimensions of each layer, including the input
+    Output:
+    parameters – the parameters learnt by the system during the training (the same parameters that were updated in the update_parameters function).
+    costs – the values of the cost function (calculated by the compute_cost function). One value is to be saved after each 100 training iterations (e.g. 3000 iterations -> 30 values).
+    """
