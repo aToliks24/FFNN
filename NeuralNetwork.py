@@ -59,8 +59,8 @@ def initialize_parameters(layer_dims):
     """
     init_params = {}
     for i, layer in enumerate(layer_dims[1:]):
-        print(i)
-        init_params['W'+str(i+1)] = np.random.rand(layer_dims[i+1],layer_dims[i]) # should we use specific range for this initialization?
+        #print(i)
+        init_params['W'+str(i+1)] = np.random.rand(layer_dims[i+1],layer_dims[i])*0.001 # should we use specific range for this initialization?
         init_params['b'+str(i+1)] = np.zeros(shape=(layer_dims[i+1],1))
 
     return init_params
@@ -290,8 +290,8 @@ def Update_parameters(parameters, grads, learning_rate):
     """
 
     for l_num in range(1,int(len(parameters)/2+1)):
-        parameters["W"+str(l_num)]+=(grads["dW"+str(l_num)]*learning_rate)
-        parameters["b"+str(l_num)] += (grads["db"+str(l_num)] * learning_rate)
+        parameters["W"+str(l_num)]-=(grads["dW"+str(l_num)]*learning_rate)
+        parameters["b"+str(l_num)] -= (grads["db"+str(l_num)] * learning_rate)
     return parameters
 
 def L_layer_model(X, Y, layers_dims, learning_rate, num_iterations,verbose=True):
@@ -320,7 +320,7 @@ def L_layer_model(X, Y, layers_dims, learning_rate, num_iterations,verbose=True)
         parameters=Update_parameters(parameters,grads,learning_rate)
         if (verbose):
             delta=(time.time()-t1)/60
-            print("Iteration {}: {} seconds ,Train Cost: {:.5}".format(i,delta,cost))
+            print("Iteration {}: {:.5} seconds ,Train Cost: {:.5}".format(i,delta,cost))
     return parameters,costs
 
 
@@ -339,10 +339,11 @@ def Predict(X, Y, parameters):
     y_pred[y_pred>=0.5]=1
     y_pred[y_pred < 0.5] = 0
     acc=0.0
-    for i,yp in enumerate(y_pred):
-        if yp==Y[i]:
+    for i,yp in enumerate(y_pred[0]):
+        if yp==Y[0][i]:
             acc+=1
-    return acc/len(Y)
+    print(str(acc/len(Y[0])))
+    return acc/len(Y[0])
 
 
 
@@ -390,9 +391,9 @@ if __name__ == '__main__':
     # test_forward()
     #test_backward()
     (x_train, y_train), (x_test, y_test) = load_data_set([1, 2])
-    x_train=np.divide(x_train,255)
-    x_test=np.divide(x_test,255)
+    #x_train=np.divide(x_train,255)
+    #x_test=np.divide(x_test,255)
     parameters, costs=L_layer_model(x_train,y_train,[x_train.shape[0],20,7,5,1],0.009,3000)
-    AL, caches=L_model_forward(x_test,parameters)
+    Predict(x_test,y_test,parameters)
 
     k=0
