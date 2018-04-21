@@ -208,10 +208,10 @@ def linear_backward(dZ,cache):
     dW - Gradient of the cost with respect to W (current layer l), same shape as W
     db - Gradient of the cost with respect to b (current layer l), same shape as b
     """
-    dA_prev=np.dot(cache["W"].T,dZ) #TODO:CHECK IF THIS IS CORRECT
-    dW=np.dot( dZ,cache['A'].transpose())#/cache['A_prev'].shape[0]
+    dA_prev=np.dot(cache["W"].T,dZ)
+    dW=np.dot( dZ,cache['A'].transpose())/(dZ.shape[1])#TODO:CHECK IF THIS IS CORRECT
     #db=dZ
-    db=np.average(dZ, axis=1).reshape((dZ.shape[0], 1))
+    db=np.average(dZ, axis=1).reshape((dZ.shape[0], 1))#TODO:CHECK IF THIS IS CORRECT
     return dA_prev,dW,db
 
 
@@ -269,9 +269,6 @@ def L_model_backward(AL, Y, caches):
     grads["dA" + str(l)] = ... grads["dW" + str(l)] = ... grads["db" + str(l)] = ...
 
     """
-    eps=0.00001
-    AL[AL==0]=eps
-    AL[AL == 1] =1- eps
     dAL= -(np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
 
     n_layers=len(caches)
@@ -318,6 +315,9 @@ def L_layer_model(X, Y, layers_dims, learning_rate, num_iterations,verbose=True)
     for i in range(num_iterations):
         t1=time.time()
         AL, caches=L_model_forward(X,parameters)
+        eps = 0.00001
+        AL[AL == 0] = eps
+        AL[AL == 1] -= eps
         cost=compute_cost(AL, Y)
         costs.append(cost)
         grads=L_model_backward(AL,Y,caches)
