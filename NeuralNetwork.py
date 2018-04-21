@@ -3,7 +3,7 @@ import numpy as np
 import idx2numpy
 import time
 np.random.seed(555)
-
+eps = 0.00001
 def load_data_set(numbers_classes):
     """
     
@@ -209,7 +209,7 @@ def linear_backward(dZ,cache):
     db - Gradient of the cost with respect to b (current layer l), same shape as b
     """
     dA_prev=np.dot(cache["W"].T,dZ)
-    dW=np.dot( dZ,cache['A'].transpose())/(dZ.shape[1])#TODO:CHECK IF THIS IS CORRECT
+    dW=np.dot( dZ,cache['A'].transpose())#/(dZ.shape[1])TODO:CHECK IF THIS IS CORRECT
     #db=dZ
     db=np.average(dZ, axis=1).reshape((dZ.shape[0], 1))#TODO:CHECK IF THIS IS CORRECT
     return dA_prev,dW,db
@@ -244,9 +244,6 @@ def sigmoid_backward (dA, activation_cache):
     dZ – gradient of the cost with respect to Z
     """
     a,_=sigmoid(activation_cache["Z"])
-    eps=0.00001
-    a[a==0]=eps
-    a[a == 1] -= eps
     gz=np.multiply( a,(1-a))
     dZ = np.multiply(dA, gz)
     return dZ
@@ -292,7 +289,7 @@ def Update_parameters(parameters, grads, learning_rate):
     parameters – the updated values of the parameters object provided as input
     """
 
-    for l_num in range(1,len(parameters)-2):
+    for l_num in range(1,int(len(parameters)/2+1)):
         parameters["W"+str(l_num)]+=(grads["dW"+str(l_num)]*learning_rate)
         parameters["b"+str(l_num)] += (grads["db"+str(l_num)] * learning_rate)
     return parameters
@@ -315,7 +312,6 @@ def L_layer_model(X, Y, layers_dims, learning_rate, num_iterations,verbose=True)
     for i in range(num_iterations):
         t1=time.time()
         AL, caches=L_model_forward(X,parameters)
-        eps = 0.00001
         AL[AL == 0] = eps
         AL[AL == 1] -= eps
         cost=compute_cost(AL, Y)
@@ -339,6 +335,14 @@ def Predict(X, Y, parameters):
     Output:
     accuracy – the accuracy measure of the neural net on the provided data
     """
+    y_pred,_= L_model_forward(X,parameters)
+    y_pred[y_pred>=0.5]=1
+    y_pred[y_pred < 0.5] = 0
+    acc=0.0
+    for i,yp in enumerate(y_pred):
+        if yp==Y[i]:
+            acc+=1
+    return acc/len(Y)
 
 
 
@@ -386,7 +390,9 @@ if __name__ == '__main__':
     # test_forward()
     #test_backward()
     (x_train, y_train), (x_test, y_test) = load_data_set([1, 2])
-    parameters, costs=L_layer_model(x_train,y_train,[x_train.shape[0],20,30,1],0.002,20)
+    x_train=np.divide(x_train,255)
+    x_test=np.divide(x_test,255)
+    parameters, costs=L_layer_model(x_train,y_train,[x_train.shape[0],20,7,5,1],0.009,3000)
     AL, caches=L_model_forward(x_test,parameters)
 
     k=0
