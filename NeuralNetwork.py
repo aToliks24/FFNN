@@ -78,7 +78,7 @@ def linear_forward(A, W, b):
     linear_cache – a dictionary containing A, W, b and Z (stored for making the backpropagation easier to compute)
     """
     Z = np.dot(W,A) + b # broadcasting
-    linear_cache = {"A": A, "W": W, "b": b}  # TODO: Remove Z from cach dictionary
+    linear_cache = {"A": A, "W": W, "b": b}
 
     return Z, linear_cache
 
@@ -191,7 +191,8 @@ def linear_activation_backward(dA, cache, activation):
         dZ=relu_backward(dA,cache)
     else:
         raise NotImplemented("No Such activation function")
-    return linear_backward(dZ,cache)
+    dA_prev, dW, db=linear_backward(dZ,cache)
+    return dA_prev, dW, db
 
 
 def linear_backward(dZ,cache):
@@ -207,9 +208,10 @@ def linear_backward(dZ,cache):
     dW - Gradient of the cost with respect to W (current layer l), same shape as W
     db - Gradient of the cost with respect to b (current layer l), same shape as b
     """
-    dA_prev=cache["W"].T*dZ
-    dW=np.dot( dZ,cache['A_prev'].transpose())#/cache['A_prev'].shape[0]
-    db=dZ#/cache['A_prev'].shape[0]
+    dA_prev=np.dot(cache["W"].T,dZ) #TODO:CHECK IF THIS IS CORRECT
+    dW=np.dot( dZ,cache['A'].transpose())#/cache['A_prev'].shape[0]
+    #db=dZ
+    db=np.average(dZ, axis=1).reshape((dZ.shape[0], 1))
     return dA_prev,dW,db
 
 
@@ -225,9 +227,9 @@ def relu_backward (dA, activation_cache):
     dZ – gradient of the cost with respect to Z
     """
     gz=activation_cache["Z"].copy()
-    gz[gz<=0] =0
-    gz[gz >0] =1
-    dZ=np.dot(dA,gz)
+    gz[gz<0] =0
+    gz[gz >=0] =1
+    dZ=np.multiply(dA,gz)
     return  dZ
 
 
@@ -242,8 +244,11 @@ def sigmoid_backward (dA, activation_cache):
     dZ – gradient of the cost with respect to Z
     """
     a,_=sigmoid(activation_cache["Z"])
-    gz=a*(1-a)
-    dZ = np.dot(dA, gz)
+    eps=0.00001
+    a[a==0]=eps
+    a[a == 1] -= eps
+    gz=np.multiply( a,(1-a))
+    dZ = np.multiply(dA, gz)
     return dZ
 
 
@@ -264,13 +269,17 @@ def L_model_backward(AL, Y, caches):
     grads["dA" + str(l)] = ... grads["dW" + str(l)] = ... grads["db" + str(l)] = ...
 
     """
+    eps=0.00001
+    AL[AL==0]=eps
+    AL[AL == 1] =1- eps
     dAL= -(np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
+
     n_layers=len(caches)
-    dA_prev, dW, db=linear_activation_backward(dAL,{"A_prev":AL,"W":caches[-1]["W"]},'sigmoid')
-    grads={"dA"+str(n_layers):dA_prev,"dW"+str(n_layers):dW,"db"+str(n_layers):db}
-    for i in range (n_layers-1,0,-1):
-        dA_prev, dW, db = linear_activation_backward(dA_prev, {"A_prev":caches[i-1]["A"],"W":caches[i]["W"]}, 'relu')
-        grads.update({"dA"+str(i):dA_prev,"dW"+str(i):dW,"db"+str(i):db})
+    dA_prev, dW, db=linear_activation_backward(dAL,{"A_prev":AL,"W":caches[-1]["W"],"Z":caches[-1]["Z"],"A":caches[-1]["A"]},'sigmoid')
+    grads={"dW"+str(n_layers):dW,"db"+str(n_layers):db}
+    for i in range (n_layers-2,-1,-1):
+        dA_prev, dW, db = linear_activation_backward(dA_prev, {"A_prev":caches[i-1]["A"],"W":caches[i]["W"],"Z":caches[i]["Z"],"A":caches[i]["A"]}, 'relu')
+        grads.update({"dW"+str(i+1):dW,"db"+str(i+1):db})
     return grads
 
 
@@ -286,9 +295,9 @@ def Update_parameters(parameters, grads, learning_rate):
     parameters – the updated values of the parameters object provided as input
     """
 
-    for l_num in range(len(parameters)):
-        parameters[l_num]["W"]+=(grads[l_num]["dW"]*learning_rate)
-        parameters[l_num]["b"] += (grads[l_num]["db"] * learning_rate)
+    for l_num in range(1,len(parameters)-2):
+        parameters["W"+str(l_num)]+=(grads["dW"+str(l_num)]*learning_rate)
+        parameters["b"+str(l_num)] += (grads["db"+str(l_num)] * learning_rate)
     return parameters
 
 def L_layer_model(X, Y, layers_dims, learning_rate, num_iterations,verbose=True):
@@ -332,6 +341,7 @@ def Predict(X, Y, parameters):
     """
 
 
+
 def test_forward():
     init = initialize_parameters([10,3,4,5,6,2,1])
     # A = np.expand_dims(np.array([1,1,1,1,1,1,1,1,1,1]), axis=1)
@@ -366,10 +376,17 @@ def test_forward():
 def test_backward():
     (x_train, y_train), (x_test, y_test) = load_data_set([1, 2])
     print("X_train shape: {}".format(x_train.shape))
-    params = initialize_parameters([x_train.shape[0], 3, 4, 5, 6, 2, 1])
+    params = initialize_parameters([x_train.shape[0], 3,1])
     AL, caches=L_model_forward(x_train,params)
-    print("AL shape: {}".format(AL.shape))
+    grads = L_model_backward(AL, y_train, caches)
+    print(caches)
+    print(grads)
 
 if __name__ == '__main__':
     # test_forward()
-    pass
+    #test_backward()
+    (x_train, y_train), (x_test, y_test) = load_data_set([1, 2])
+    parameters, costs=L_layer_model(x_train,y_train,[x_train.shape[0],20,30,1],0.002,20)
+    AL, caches=L_model_forward(x_test,parameters)
+
+    k=0
