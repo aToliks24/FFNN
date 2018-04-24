@@ -2,7 +2,7 @@
 import numpy as np
 import idx2numpy
 import time
-np.random.seed(555)
+np.random.seed(1)
 eps = 0.00001
 def load_data_set(numbers_classes):
     """
@@ -209,9 +209,8 @@ def linear_backward(dZ,cache):
     db - Gradient of the cost with respect to b (current layer l), same shape as b
     """
     dA_prev=np.dot(cache["W"].T,dZ)
-    dW=np.dot( dZ,cache['A'].transpose())#/(dZ.shape[1])TODO:CHECK IF THIS IS CORRECT
-    #db=dZ
-    db=np.average(dZ, axis=1).reshape((dZ.shape[0], 1))#TODO:CHECK IF THIS IS CORRECT
+    dW=np.dot( dZ,cache['A'].transpose())
+    db=np.average(dZ, axis=1).reshape((dZ.shape[0], 1))
     return dA_prev,dW,db
 
 
@@ -269,10 +268,10 @@ def L_model_backward(AL, Y, caches):
     dAL= -(np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
 
     n_layers=len(caches)
-    dA_prev, dW, db=linear_activation_backward(dAL,{"A_prev":AL,"W":caches[-1]["W"],"Z":caches[-1]["Z"],"A":caches[-1]["A"]},'sigmoid')
+    dA_prev, dW, db=linear_activation_backward(dAL,{"W":caches[-1]["W"],"Z":caches[-1]["Z"],"A":caches[-1]["A"]},'sigmoid')
     grads={"dW"+str(n_layers):dW,"db"+str(n_layers):db}
     for i in range (n_layers-2,-1,-1):
-        dA_prev, dW, db = linear_activation_backward(dA_prev, {"A_prev":caches[i-1]["A"],"W":caches[i]["W"],"Z":caches[i]["Z"],"A":caches[i]["A"]}, 'relu')
+        dA_prev, dW, db = linear_activation_backward(dA_prev, {"W":caches[i]["W"],"Z":caches[i]["Z"],"A":caches[i]["A"]}, 'relu')
         grads.update({"dW"+str(i+1):dW,"db"+str(i+1):db})
     return grads
 
@@ -393,7 +392,7 @@ if __name__ == '__main__':
     (x_train, y_train), (x_test, y_test) = load_data_set([1, 2])
     #x_train=np.divide(x_train,255)
     #x_test=np.divide(x_test,255)
-    parameters, costs=L_layer_model(x_train,y_train,[x_train.shape[0],20,7,5,1],0.009,3000)
+    parameters, costs=L_layer_model(x_train,y_train,[x_train.shape[0],20,7,5,1],0.009,500)
     Predict(x_test,y_test,parameters)
 
     k=0
