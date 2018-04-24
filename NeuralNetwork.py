@@ -2,7 +2,7 @@
 import numpy as np
 import idx2numpy
 import time
-np.random.seed(555)
+#np.random.seed(1)
 eps = 0.00001
 def load_data_set(numbers_classes):
     """
@@ -16,15 +16,15 @@ def load_data_set(numbers_classes):
 
     x_train = idx2numpy.convert_from_file('data/train-images.idx3-ubyte')  # shape ((m_train, 28, 28)
     x_train = x_train.reshape(x_train.shape[0], -1)  # shape (m_train,784)
-    print("    x_train = x_train.reshape(x_train.shape[0], -1).T:   ", x_train.shape)
+    # print("    x_train = x_train.reshape(x_train.shape[0], -1).T:   ", x_train.shape)
 
     y_train = idx2numpy.convert_from_file('data/train-labels.idx1-ubyte')
     #y_train = np.expand_dims(y_train, axis=0)
-    print("np.expand_dims(y_train, axis=0):    ", y_train.shape)
+    # print("np.expand_dims(y_train, axis=0):    ", y_train.shape)
 
     mask = np.vectorize(lambda t: True if t in numbers_classes else False)
     train_mask = mask(y_train)
-    print("train_mask = mask(y_train):     ", train_mask.shape)
+    # print("train_mask = mask(y_train):     ", train_mask.shape)
     x_train = x_train[train_mask]
     y_train = y_train[train_mask]
 
@@ -57,10 +57,17 @@ def initialize_parameters(layer_dims):
     input: an array of the dimensions of each layer in the network (layer 0 is the size of the flattened input, layer L is the output sigmoid)
     output: a dictionary containing the initialized W and b parameters of each layer (W1…WL, b1…bL).
     """
+    np.random.seed(1)
     init_params = {}
+    # print ("++++++", len(layer_dims))
     for i, layer in enumerate(layer_dims[1:]):
-        print(i)
-        init_params['W'+str(i+1)] = np.random.rand(layer_dims[i+1],layer_dims[i]) # should we use specific range for this initialization?
+        # print(i)
+
+        # if i+1 == len(layer_dims)-1:
+        init_params['W' + str(i + 1)] = np.random.rand(layer_dims[i + 1], layer_dims[i]) * 0.01 # 2/np.sqrt(layer_dims[i])#   # should we use specific range for this initialization?
+        # print (init_params['W' + str(i + 1)].shape)
+        # else:
+        #     init_params['W' + str(i + 1)] = np.random.rand(layer_dims[i + 1], layer_dims[i]) * 0.001 #  # should we use specific range for this initialization?
         init_params['b'+str(i+1)] = np.zeros(shape=(layer_dims[i+1],1))
 
     return init_params
@@ -77,6 +84,7 @@ def linear_forward(A, W, b):
     Z – the linear component of the activation function (i.e., the value before applying the non-linear function)
     linear_cache – a dictionary containing A, W, b and Z (stored for making the backpropagation easier to compute)
     """
+    #print ("linear_forward b: ", b.shape)
     Z = np.dot(W,A) + b # broadcasting
     linear_cache = {"A": A, "W": W, "b": b}
 
@@ -165,12 +173,12 @@ def compute_cost(AL, Y):
     Output:
     cost – the cross-entropy cost
     """
-    #TODO verify len(Y): Y is (m,1) or(1,m)?? Answer: Y is (1,m)
+        #TODO verify len(Y): Y is (m,1) or(1,m)?? Answer: Y is (1,m)
     cost = -1.0/Y.shape[1] * np.sum(np.multiply(Y, np.log(AL)) + np.multiply(1 - Y, np.log(1 - AL)))
     return cost
 
 
-
+# ok
 def linear_activation_backward(dA, cache, activation):
     """
     Description:
@@ -186,16 +194,17 @@ def linear_activation_backward(dA, cache, activation):
 
     """
     if activation == "sigmoid":
-        dZ=sigmoid_backward(dA,cache)
+        dZ = sigmoid_backward(dA, cache)
     elif activation == "relu":
-        dZ=relu_backward(dA,cache)
+        dZ = relu_backward(dA, cache)
     else:
         raise NotImplemented("No Such activation function")
-    dA_prev, dW, db=linear_backward(dZ,cache)
+
+    dA_prev, dW, db = linear_backward(dZ, cache)
     return dA_prev, dW, db
 
-
-def linear_backward(dZ,cache):
+# need to verify
+def linear_backward(dZ, cache):
     """
     Description :Implements the linear part of the backward propagation process for a single layer
 
@@ -208,15 +217,17 @@ def linear_backward(dZ,cache):
     dW - Gradient of the cost with respect to W (current layer l), same shape as W
     db - Gradient of the cost with respect to b (current layer l), same shape as b
     """
-    dA_prev=np.dot(cache["W"].T,dZ)
-    dW=np.dot( dZ,cache['A'].transpose())#/(dZ.shape[1])TODO:CHECK IF THIS IS CORRECT
-    #db=dZ
-    db=np.average(dZ, axis=1).reshape((dZ.shape[0], 1))#TODO:CHECK IF THIS IS CORRECT
+    m = cache['A'].shape[1]
+
+    dA_prev = np.dot(cache["W"].T, dZ)
+    dW = np.dot(dZ, cache['A'].transpose()) / (dZ.shape[1]) # TODO:CHECK IF THIS IS CORRECT
+    db = np.average(dZ, axis=1).reshape((dZ.shape[0], 1)) #TODO:CHECK IF THIS IS CORRECT
+
     return dA_prev,dW,db
 
 
-
-def relu_backward (dA, activation_cache):
+# OK
+def relu_backward(dA, activation_cache):
     """
     Description:
     Implements backward propagation for a ReLU unit
@@ -226,14 +237,14 @@ def relu_backward (dA, activation_cache):
     Output:
     dZ – gradient of the cost with respect to Z
     """
-    gz=activation_cache["Z"].copy()
-    gz[gz<0] =0
-    gz[gz >=0] =1
-    dZ=np.multiply(dA,gz)
-    return  dZ
+    gz = activation_cache["Z"].copy() # todo: why copy?
+    gz[gz <= 0] = 0
+    gz[gz > 0] = 1
+    dZ = np.multiply(dA, gz)
+    return dZ
 
-
-def sigmoid_backward (dA, activation_cache):
+# OK
+def sigmoid_backward(dA, activation_cache):
     """
     Description:
     Implements backward propagation for a sigmoid unit
@@ -243,8 +254,8 @@ def sigmoid_backward (dA, activation_cache):
     Output:
     dZ – gradient of the cost with respect to Z
     """
-    a,_=sigmoid(activation_cache["Z"])
-    gz=np.multiply( a,(1-a))
+    a, _ = sigmoid(activation_cache["Z"])
+    gz = np.multiply(a, (1-a))
     dZ = np.multiply(dA, gz)
     return dZ
 
@@ -269,14 +280,14 @@ def L_model_backward(AL, Y, caches):
     dAL= -(np.divide(Y, AL) - np.divide(1 - Y, 1 - AL))
 
     n_layers=len(caches)
-    dA_prev, dW, db=linear_activation_backward(dAL,{"A_prev":AL,"W":caches[-1]["W"],"Z":caches[-1]["Z"],"A":caches[-1]["A"]},'sigmoid')
+    dA_prev, dW, db=linear_activation_backward(dAL,{"W":caches[-1]["W"],"Z":caches[-1]["Z"],"A":caches[-1]["A"]},'sigmoid')
     grads={"dW"+str(n_layers):dW,"db"+str(n_layers):db}
     for i in range (n_layers-2,-1,-1):
-        dA_prev, dW, db = linear_activation_backward(dA_prev, {"A_prev":caches[i-1]["A"],"W":caches[i]["W"],"Z":caches[i]["Z"],"A":caches[i]["A"]}, 'relu')
+        dA_prev, dW, db = linear_activation_backward(dA_prev, {"W":caches[i]["W"],"Z":caches[i]["Z"],"A":caches[i]["A"]}, 'relu')
         grads.update({"dW"+str(i+1):dW,"db"+str(i+1):db})
     return grads
 
-
+# OK
 def Update_parameters(parameters, grads, learning_rate):
     """
     Description:
@@ -290,9 +301,11 @@ def Update_parameters(parameters, grads, learning_rate):
     """
 
     for l_num in range(1,int(len(parameters)/2+1)):
-        parameters["W"+str(l_num)]+=(grads["dW"+str(l_num)]*learning_rate)
-        parameters["b"+str(l_num)] += (grads["db"+str(l_num)] * learning_rate)
+        parameters["W"+str(l_num)] -= (grads["dW" + str(l_num)] * learning_rate)
+        parameters["b"+str(l_num)] -= (grads["db" + str(l_num)] * learning_rate)
+
     return parameters
+
 
 def L_layer_model(X, Y, layers_dims, learning_rate, num_iterations,verbose=True):
     """
@@ -312,15 +325,24 @@ def L_layer_model(X, Y, layers_dims, learning_rate, num_iterations,verbose=True)
     for i in range(num_iterations):
         t1=time.time()
         AL, caches=L_model_forward(X,parameters)
+
+        if AL[AL == 0].shape[0] > 0:
+            print("AL[AL == 0]", AL[AL == 0].shape[0])
+        if AL[AL == 1].shape[0] > 0:
+            print("AL[AL == 1]", AL[AL == 1].shape[0])
+
         AL[AL == 0] = eps
         AL[AL == 1] -= eps
+
         cost=compute_cost(AL, Y)
         costs.append(cost)
         grads=L_model_backward(AL,Y,caches)
         parameters=Update_parameters(parameters,grads,learning_rate)
         if (verbose):
-            delta=(time.time()-t1)/60
-            print("Iteration {}: {} seconds ,Train Cost: {:.5}".format(i,delta,cost))
+            if (i+1) % 100 == 0:
+                delta=(time.time()-t1)/60
+                print("Iteration {}: Train Cost: {:.5}".format(i,cost))
+                # print("Iteration {}: {} seconds ,Train Cost: {:.5}".format(i,delta,cost))
     return parameters,costs
 
 
@@ -335,14 +357,14 @@ def Predict(X, Y, parameters):
     Output:
     accuracy – the accuracy measure of the neural net on the provided data
     """
-    y_pred,_= L_model_forward(X,parameters)
-    y_pred[y_pred>=0.5]=1
+    y_pred, _ = L_model_forward(X,parameters)
+    y_pred[y_pred >= 0.5] = 1
     y_pred[y_pred < 0.5] = 0
-    acc=0.0
-    for i,yp in enumerate(y_pred):
-        if yp==Y[i]:
-            acc+=1
-    return acc/len(Y)
+    acc = 0.0
+    for i,yp in enumerate(y_pred.T):
+        if yp == Y.T[i]:
+            acc += 1
+    return acc/len(Y.T)
 
 
 
@@ -386,13 +408,27 @@ def test_backward():
     print(caches)
     print(grads)
 
-if __name__ == '__main__':
-    # test_forward()
-    #test_backward()
-    (x_train, y_train), (x_test, y_test) = load_data_set([1, 2])
-    x_train=np.divide(x_train,255)
-    x_test=np.divide(x_test,255)
-    parameters, costs=L_layer_model(x_train,y_train,[x_train.shape[0],20,7,5,1],0.009,3000)
-    AL, caches=L_model_forward(x_test,parameters)
+def train_and_test_model(numbers_classes):
+    (x_train, y_train), (x_test, y_test) = load_data_set(numbers_classes)
+    parameters, costs = L_layer_model(x_train, y_train, [x_train.shape[0], 20, 7, 5, 1], 0.009, 3000)
+    accuracy = Predict(x_test, y_test, parameters)
+    print(numbers_classes, 'Classifier Accuracy: ', accuracy)
 
-    k=0
+
+
+if __name__ == '__main__':
+   # train_and_test_model([3, 8])
+    train_and_test_model([7, 9])
+    # # test_forward()
+    # # test_backward()
+    # (x_train, y_train), (x_test, y_test) = load_data_set([3, 8]) # 7,9
+    # # x_train=np.divide(x_train,255)
+    # # x_test=np.divide(x_test,255)
+    # parameters, costs=L_layer_model(x_train,y_train,[x_train.shape[0],20,7,5,1],0.009,3000)
+    # accuracy = Predict(x_test, y_test, parameters)
+    # print('Parameters: ', parameters)
+    #     print('Costs: ', costs)
+    # print('Accuracy: ', accuracy)
+    # # AL, caches=L_model_forward(x_test,parameters)
+    #
+    # # k=0
