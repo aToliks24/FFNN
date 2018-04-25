@@ -61,7 +61,7 @@ def initialize_parameters(layer_dims):
     np.random.seed(1)
     init_params = {}
     for i, layer in enumerate(layer_dims[1:]):
-        init_params['W' + str(i + 1)] = np.random.rand(layer_dims[i + 1], layer_dims[i]) * 0.01 # 2/np.sqrt(layer_dims[i])#
+        init_params['W' + str(i + 1)] = np.random.rand(layer_dims[i + 1], layer_dims[i]) * 0.01
         init_params['b'+str(i+1)] = np.zeros(shape=(layer_dims[i+1],1))
 
     return init_params
@@ -318,10 +318,10 @@ def L_layer_model(X, Y, layers_dims, learning_rate, num_iterations,verbose=True)
         t1=time.time()
         AL, caches=L_model_forward(X,parameters)
 
-        if AL[AL == 0].shape[0] > 0:
-            print("AL[AL == 0]", AL[AL == 0].shape[0])
-        if AL[AL == 1].shape[0] > 0:
-            print("AL[AL == 1]", AL[AL == 1].shape[0])
+        # if AL[AL == 0].shape[0] > 0:
+        #     print("AL[AL == 0]", AL[AL == 0].shape[0])
+        # if AL[AL == 1].shape[0] > 0:
+        #     print("AL[AL == 1]", AL[AL == 1].shape[0])
 
         AL[AL == 0] = eps
         AL[AL == 1] -= eps
@@ -359,57 +359,17 @@ def Predict(X, Y, parameters):
             acc += 1
     return acc/len(Y.T)
 
-#
-# def test_forward():
-#     init = initialize_parameters([10,3,4,5,6,2,1])
-#     # A = np.expand_dims(np.array([1,1,1,1,1,1,1,1,1,1]), axis=1)
-#     A = np.array([[1, 1, 1, 1, 1, 1, 1, 1, 1, 1],[1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]).T
-#     print ('W1 shape:', init['W1'].shape)
-#     print (init['W1'])
-#     print('A shape:', A.shape)
-#     print (A)
-#     print('W*A:', np.dot(init['W1'], A), np.dot(init['W1'], A).shape)
-#     print('b1 shape:', init['b1'].shape)
-#     print(init['b1'])
-#
-#     print (init['W1'])
-#     A_new, cash = linear_forward(A, init['W1'], init['b1'])
-#     print (A_new)
-#
-#     print ("-------------------")
-#     print ('W2 shape:', init['W2'].shape)
-#     print (init['W2'])
-#     print('A_new shape:', A_new.shape)
-#     print (A_new)
-#     print('b2 shape:', init['b2'].shape)
-#     print(init['b2'])
-#     print(linear_forward(A_new, init['W2'], init['b2']))
-#
-#     print (sigmoid(np.array([[-100,-100,-100],[100,100,100],[1,1,1]])))
-#     print (relu(np.array([[0.1,0.1,0.1],[-2,-2,-2],[1,1,1]])))
-#
-#     (x_train, y_train), (x_test, y_test)  = load_data_set([1,2])
-#     print ((x_train.shape, y_train.shape), (x_test.shape, y_test.shape))
-#
-#
-# def test_backward():
-#     (x_train, y_train), (x_test, y_test) = load_data_set([1, 2])
-#     print("X_train shape: {}".format(x_train.shape))
-#     params = initialize_parameters([x_train.shape[0], 3,1])
-#     AL, caches=L_model_forward(x_train,params)
-#     grads = L_model_backward(AL, y_train, caches)
-#     print(caches)
-#     print(grads)
-
 
 def train_and_test_model(numbers_classes):
     (x_train, y_train), (x_test, y_test) = load_data_set(numbers_classes)
     parameters, costs = L_layer_model(x_train, y_train, [x_train.shape[0], 20, 7, 5, 1], 0.009, 3000)
-    accuracy = Predict(x_test, y_test, parameters)
-    print(numbers_classes, 'Classifier Accuracy: ', accuracy)
+    accuracy_train = Predict(x_train, y_train, parameters)
+    accuracy_test = Predict(x_test, y_test, parameters)
+    print(numbers_classes, 'Classifier, Train Accuracy: ', accuracy_train)
+    print(numbers_classes, 'Classifier, Test Accuracy: ', accuracy_test)
 
 
 if __name__ == '__main__':
-    #  train_and_test_model([3, 8])
+    #train_and_test_model([3, 8])
     train_and_test_model([7, 9])
 
